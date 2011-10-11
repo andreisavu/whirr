@@ -20,7 +20,6 @@ package org.apache.whirr.compute;
 
 import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
-import org.apache.whirr.actions.BootstrapClusterAction;
 import org.jclouds.compute.ComputeService;
 import org.jclouds.compute.RunNodesException;
 import org.jclouds.compute.domain.NodeMetadata;
