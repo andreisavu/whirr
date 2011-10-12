@@ -21,15 +21,6 @@ function configure_hadoop() {
   ROLES=$1
   shift
   
-  CLOUD_PROVIDER=
-  while getopts "c:" OPTION; do
-    case $OPTION in
-    c)
-      CLOUD_PROVIDER="$OPTARG"
-      ;;
-    esac
-  done
-  
   case $CLOUD_PROVIDER in
     ec2 | aws-ec2 )
       # Alias /mnt as /data
@@ -53,30 +44,26 @@ function configure_hadoop() {
 
   # Copy generated configuration files in place
   cp /tmp/{core,hdfs,mapred}-site.xml $HADOOP_CONF_DIR
+  cp /tmp/hadoop-env.sh $HADOOP_CONF_DIR
 
   # Keep PID files in a non-temporary directory
-  sed -i -e "s|# export HADOOP_PID_DIR=.*|export HADOOP_PID_DIR=/var/run/hadoop|" \
-    $HADOOP_CONF_DIR/hadoop-env.sh
-  mkdir -p /var/run/hadoop
-  chown -R hadoop:hadoop /var/run/hadoop
+  HADOOP_PID_DIR=$(. /tmp/hadoop-env.sh; echo $HADOOP_PID_DIR)
+  HADOOP_PID_DIR=${HADOOP_PID_DIR:-/var/run/hadoop}
+  mkdir -p $HADOOP_PID_DIR
+  chown -R hadoop:hadoop $HADOOP_PID_DIR
 
-  # Set SSH options within the cluster
-  sed -i -e 's|# export HADOOP_SSH_OPTS=.*|export HADOOP_SSH_OPTS="-o StrictHostKeyChecking=no"|' \
-    $HADOOP_CONF_DIR/hadoop-env.sh
-    
-  # Disable IPv6
-  sed -i -e 's|# export HADOOP_OPTS=.*|export HADOOP_OPTS="-Djava.net.preferIPv4Stack=true"|' \
-    $HADOOP_CONF_DIR/hadoop-env.sh
+  # Create the actual log dir
+  mkdir -p /data/hadoop/logs
+  chown -R hadoop:hadoop /data/hadoop/logs
 
-  # Hadoop logs should be on the /data partition
-  sed -i -e 's|# export HADOOP_LOG_DIR=.*|export HADOOP_LOG_DIR=/var/log/hadoop/logs|' \
-    $HADOOP_CONF_DIR/hadoop-env.sh
-  rm -rf /var/log/hadoop
-  mkdir /data/hadoop/logs
-  chown hadoop:hadoop /data/hadoop/logs
-  ln -s /data/hadoop/logs /var/log/hadoop
-  chown -R hadoop:hadoop /var/log/hadoop
-  
+  # Create a symlink at $HADOOP_LOG_DIR
+  HADOOP_LOG_DIR=$(. /tmp/hadoop-env.sh; echo $HADOOP_LOG_DIR)
+  HADOOP_LOG_DIR=${HADOOP_LOG_DIR:-/var/log/hadoop/logs}
+  rm -rf $HADOOP_LOG_DIR
+  mkdir -p $(dirname $HADOOP_LOG_DIR)
+  ln -s /data/hadoop/logs $HADOOP_LOG_DIR
+  chown -R hadoop:hadoop $HADOOP_LOG_DIR
+
   for role in $(echo "$ROLES" | tr "," "\n"); do
     case $role in
     hadoop-namenode)

@@ -25,9 +25,8 @@ function configure_hbase() {
   MASTER_HOST=
   ZOOKEEKER_QUORUM=
   PORT=
-  CLOUD_PROVIDER=
   HBASE_TAR_URL=
-  while getopts "m:q:p:c:u:" OPTION; do
+  while getopts "m:q:p:u:" OPTION; do
     case $OPTION in
     m)
       MASTER_HOST="$OPTARG"
@@ -38,25 +37,11 @@ function configure_hbase() {
     p)
       PORT="$OPTARG"
       ;;
-    c)
-      CLOUD_PROVIDER="$OPTARG"
-      ;;
     u)
       HBASE_TAR_URL="$OPTARG"
       ;;
     esac
   done
-  
-  # determine machine name
-  case $CLOUD_PROVIDER in
-    ec2 | aws-ec2 )
-      # Use public hostname for EC2
-      SELF_HOST=`wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname`
-      ;;
-    *)
-      SELF_HOST=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
-      ;;
-  esac
   
   # assign default URL if no other given (optional)
   HBASE_TAR_URL=${HBASE_TAR_URL:-http://archive.apache.org/dist/hbase/hbase-0.90.0/hbase-0.90.0.tar.gz}
@@ -91,14 +76,25 @@ function configure_hbase() {
   mkdir /etc/hbase
   ln -s $HBASE_CONF_DIR /etc/hbase/conf
 
-  # Copy generated configuration file in place
+  # Copy generated configuration files in place
   cp /tmp/hbase-site.xml $HBASE_CONF_DIR
+  cp /tmp/hbase-env.sh $HBASE_CONF_DIR
 
-  # override JVM options
-  cat >> $HBASE_CONF_DIR/hbase-env.sh <<EOF
-export HBASE_MASTER_OPTS="-Xms1000m -Xmx1000m -Xmn256m -XX:+UseConcMarkSweepGC -XX:+AggressiveOpts -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Xloggc:/mnt/hbase/logs/hbase-master-gc.log"
-export HBASE_REGIONSERVER_OPTS="-Xms2000m -Xmx2000m -Xmn256m -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=88 -XX:+AggressiveOpts -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Xloggc:/mnt/hbase/logs/hbase-regionserver-gc.log"
-EOF
+  # HBASE_PID_DIR should exist and be owned by hadoop:hadoop
+  mkdir -p /var/run/hbase
+  chown -R hadoop:hadoop /var/run/hbase
+  
+  # Create the actual log dir
+  mkdir -p $MOUNT/hbase/logs
+  chown -R hadoop:hadoop $MOUNT/hbase/logs
+
+  # Create a symlink at $HBASE_LOG_DIR
+  HBASE_LOG_DIR=$(. $HBASE_CONF_DIR/hbase-env.sh; echo $HBASE_LOG_DIR)
+  HBASE_LOG_DIR=${HBASE_LOG_DIR:-/var/log/hbase/logs}
+  rm -rf $HBASE_LOG_DIR
+  mkdir -p $(dirname $HBASE_LOG_DIR)
+  ln -s $MOUNT/hbase/logs $HBASE_LOG_DIR
+  chown -R hadoop:hadoop $HBASE_LOG_DIR
 
   # configure hbase for ganglia
   cat > $HBASE_CONF_DIR/hadoop-metrics.properties <<EOF
@@ -146,29 +142,6 @@ EOF
     echo Copy hadoop jar to HBase error: did not find your Hadoop installation
   fi
 
-  # keep PID files in a non-temporary directory
-  sed -i -e "s|# export HBASE_PID_DIR=.*|export HBASE_PID_DIR=/var/run/hbase|" \
-    $HBASE_CONF_DIR/hbase-env.sh
-  mkdir -p /var/run/hbase
-  chown -R hadoop:hadoop /var/run/hbase
-
-  # set SSH options within the cluster
-  sed -i -e 's|# export HBASE_SSH_OPTS=.*|export HBASE_SSH_OPTS="-o StrictHostKeyChecking=no"|' \
-    $HBASE_CONF_DIR/hbase-env.sh
-
-  # disable IPv6
-  sed -i -e 's|# export HBASE_OPTS=.*|export HBASE_OPTS="-Djava.net.preferIPv4Stack=true"|' \
-    $HBASE_CONF_DIR/hbase-env.sh
-
-  # hbase logs should be on the /mnt partition
-  sed -i -e 's|# export HBASE_LOG_DIR=.*|export HBASE_LOG_DIR=/var/log/hbase/logs|' \
-    $HBASE_CONF_DIR/hbase-env.sh
-  rm -rf /var/log/hbase
-  mkdir $MOUNT/hbase/logs
-  chown hadoop:hadoop $MOUNT/hbase/logs
-  ln -s $MOUNT/hbase/logs /var/log/hbase
-  chown -R hadoop:hadoop /var/log/hbase
-  
   for role in $(echo "$ROLES" | tr "," "\n"); do
     case $role in
     hbase-master)

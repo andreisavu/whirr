@@ -25,7 +25,6 @@ function configure_cdh_hbase() {
   MASTER_HOST=
   ZOOKEEPER_QUORUM=
   PORT=
-  CLOUD_PROVIDER=
   HBASE_TAR_URL=
   while getopts "m:q:p:c:u:" OPTION; do
     case $OPTION in
@@ -38,25 +37,11 @@ function configure_cdh_hbase() {
     p)
       PORT="$OPTARG"
       ;;
-    c)
-      CLOUD_PROVIDER="$OPTARG"
-      ;;
     u)
       HBASE_TAR_URL="$OPTARG"
       ;;
     esac
   done
-  
-  # determine machine name
-  case $CLOUD_PROVIDER in
-    ec2 | aws-ec2 )
-      # Use public hostname for EC2
-      SELF_HOST=`wget -q -O - http://169.254.169.254/latest/meta-data/public-hostname`
-      ;;
-    *)
-      SELF_HOST=`/sbin/ifconfig eth0 | grep 'inet addr:' | cut -d: -f2 | awk '{ print $1}'`
-      ;;
-  esac
   
   HBASE_HOME=/usr/lib/$HBASE_VERSION
   HBASE_CONF_DIR=/etc/hbase/conf
@@ -77,14 +62,27 @@ function configure_cdh_hbase() {
     chmod a+rwxt /data/tmp
   fi
 
-  # Copy generated configuration file in place
+  # Copy generated configuration files in place
   cp /tmp/hbase-site.xml $HBASE_CONF_DIR
+  cp /tmp/hbase-env.sh $HBASE_CONF_DIR
 
-  # override JVM options
-  cat >> $HBASE_CONF_DIR/hbase-env.sh <<EOF
-export HBASE_MASTER_OPTS="-Xms1000m -Xmx1000m -Xmn256m -XX:+UseConcMarkSweepGC -XX:+AggressiveOpts -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Xloggc:/data/hbase/logs/hbase-master-gc.log"
-export HBASE_REGIONSERVER_OPTS="-Xms2000m -Xmx2000m -Xmn256m -XX:+UseConcMarkSweepGC -XX:CMSInitiatingOccupancyFraction=88 -XX:+AggressiveOpts -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Xloggc:/data/hbase/logs/hbase-regionserver-gc.log"
-EOF
+  # HBASE_PID_DIR should exist and be owned by hadoop:hadoop
+  HBASE_PID_DIR=$(. $HBASE_CONF_DIR/hbase-env.sh; echo $HBASE_PID_DIR)
+  HBASE_PID_DIR=${HBASE_PID_DIR:-/var/run/hbase}
+  mkdir -p $HBASE_PID_DIR
+  chown -R hadoop:hadoop $HBASE_PID_DIR
+
+  # Create the actual log dir
+  mkdir -p /data/hbase/logs
+  chown -R hbase:hbase /data/hbase/logs
+
+  # Create a symlink at $HBASE_LOG_DIR
+  HBASE_LOG_DIR=$(. $HBASE_CONF_DIR/hbase-env.sh; echo $HBASE_LOG_DIR)
+  HBASE_LOG_DIR=${HBASE_LOG_DIR:-/var/log/hbase}
+  rm -rf $HBASE_LOG_DIR
+  mkdir -p $(dirname $HBASE_LOG_DIR)
+  ln -s /data/hbase/logs $HBASE_LOG_DIR
+  chown -R hbase:hbase $HBASE_LOG_DIR
 
   # configure hbase for ganglia
   cat > $HBASE_CONF_DIR/hadoop-metrics.properties <<EOF
@@ -98,27 +96,6 @@ jvm.class=org.apache.hadoop.metrics.ganglia.GangliaContext
 jvm.period=10
 jvm.servers=$MASTER_HOST:8649
 EOF
-
-  # keep PID files in a non-temporary directory
-  sed -i -e "s|# export HBASE_PID_DIR=.*|export HBASE_PID_DIR=/var/run/hbase|" \
-    $HBASE_CONF_DIR/hbase-env.sh
-
-  # set SSH options within the cluster
-  sed -i -e 's|# export HBASE_SSH_OPTS=.*|export HBASE_SSH_OPTS="-o StrictHostKeyChecking=no"|' \
-    $HBASE_CONF_DIR/hbase-env.sh
-
-  # disable IPv6
-  sed -i -e 's|export HBASE_OPTS="$HBASE_OPTS -ea -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode"|export HBASE_OPTS="$HBASE_OPTS -ea -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -Djava.net.preferIPv4Stack=true"|' \
-    $HBASE_CONF_DIR/hbase-env.sh
-
-  # hbase logs should be on the /data partition
-  sed -i -e 's|# export HBASE_LOG_DIR=.*|export HBASE_LOG_DIR=/var/log/hbase/logs|' \
-    $HBASE_CONF_DIR/hbase-env.sh
-  rm -rf /var/log/hbase
-  mkdir /data/hbase/logs
-  chown hbase:hbase /data/hbase/logs
-  ln -s /data/hbase/logs /var/log/hbase
-  chown -R hbase:hbase /var/log/hbase
 
   # Now that the configuration is done, install the daemon packages
   for role in $(echo "$ROLES" | tr "," "\n"); do
