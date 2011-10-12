@@ -26,6 +26,14 @@ Trunk (unreleased changes)
 
     WHIRR-387. Add Website Navigation Links (asavu)
 
+    WHIRR-395. Less verbose logging when setting firewall rules.
+    (asavu via tomwhite)
+
+    WHIRR-368. Add the ability to adjust contents of hadoop-env.sh from 
+    a cluster properties file (Karel Vervaeke via asavu)
+
+    WHIRR-325. Reduce cloud provider-specific code in scripts (tomwhite and asavu)
+
   BUG FIXES
 
     WHIRR-377. Fix broken CLI logging config. (asavu via tomwhite)

@@ -166,10 +166,6 @@ public class Cluster {
     instances = Sets.filter(instances, Predicates.not(predicate));
   }
 
-  public void addInstance(Instance instance) {
-    instances.add(instance);
-  }
-
   public String toString() {
     return Objects.toStringHelper(this)
       .add("instances", instances)

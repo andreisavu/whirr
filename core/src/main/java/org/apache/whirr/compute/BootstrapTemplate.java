@@ -49,20 +49,24 @@ public class BootstrapTemplate {
   private static final Logger LOG =
     LoggerFactory.getLogger(BootstrapTemplate.class);
 
-  public static Template build(ClusterSpec clusterSpec,
-      ComputeService computeService, StatementBuilder statementBuilder,
-      TemplateBuilderStrategy strategy)
-      throws MalformedURLException {
+  public static Template build(
+    ClusterSpec clusterSpec,
+    ComputeService computeService,
+    StatementBuilder statementBuilder,
+    TemplateBuilderStrategy strategy
+  ) throws MalformedURLException {
 
     LOG.info("Configuring template");
-    if (LOG.isDebugEnabled())
-      LOG.debug("Running script:\n{}", statementBuilder.render(OsFamily.UNIX));
 
     Statement runScript = addUserAndAuthorizeSudo(
         clusterSpec.getClusterUser(),
         clusterSpec.getPublicKey(),
         clusterSpec.getPrivateKey(),
-        statementBuilder);
+        statementBuilder.build(clusterSpec));
+
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("Running script:\n{}", runScript.render(OsFamily.UNIX));
+    }
 
     TemplateBuilder templateBuilder = computeService.templateBuilder()
       .options(runScript(runScript));
@@ -73,16 +77,19 @@ public class BootstrapTemplate {
     );
   }
 
-  private static Statement addUserAndAuthorizeSudo(String user,
-    String publicKey, String privateKey, Statement statement) {
-    return new InitBuilder("setup-" + user,// name of the script
-     "/tmp",// working directory
-     "/tmp/logs",// location of stdout.log and stderr.log
-     ImmutableMap.of("newUser", user, "defaultHome", "/home/users"), // variables
-     ImmutableList.<Statement> of(
-       createUserWithPublicAndPrivateKey(user, publicKey, privateKey),
-       makeSudoersOnlyPermitting(user),
-       statement));
+  private static Statement addUserAndAuthorizeSudo(
+    String user, String publicKey, String privateKey, Statement statement
+  ) {
+    return new InitBuilder(
+      "setup-" + user,// name of the script
+      "/tmp",// working directory
+      "/tmp/logs",// location of stdout.log and stderr.log
+      ImmutableMap.of("newUser", user, "defaultHome", "/home/users"), // variables
+      ImmutableList.<Statement> of(
+        createUserWithPublicAndPrivateKey(user, publicKey, privateKey),
+        makeSudoersOnlyPermitting(user),
+        statement)
+    );
   }
 
   /**

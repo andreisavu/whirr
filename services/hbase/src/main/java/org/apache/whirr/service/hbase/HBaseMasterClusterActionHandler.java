@@ -18,14 +18,20 @@
 
 package org.apache.whirr.service.hbase;
 
-import static org.apache.whirr.RolePredicates.role;
-import static org.apache.whirr.service.FirewallManager.Rule;
-import static org.apache.whirr.service.hbase.HBaseConfigurationBuilder.buildHBaseSite;
-import static org.jclouds.scriptbuilder.domain.Statements.call;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.io.Files;
+import org.apache.commons.configuration.Configuration;
+import org.apache.commons.configuration.ConfigurationException;
+import org.apache.whirr.Cluster;
+import org.apache.whirr.Cluster.Instance;
+import org.apache.whirr.ClusterSpec;
+import org.apache.whirr.service.ClusterActionEvent;
+import org.apache.whirr.service.FirewallManager.Rule;
+import org.apache.whirr.service.hadoop.HadoopProxy;
+import org.apache.whirr.service.zookeeper.ZooKeeperCluster;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -33,15 +39,10 @@ import java.net.InetAddress;
 import java.util.Map.Entry;
 import java.util.Properties;
 
-import org.apache.commons.configuration.ConfigurationException;
-import org.apache.whirr.Cluster;
-import org.apache.whirr.Cluster.Instance;
-import org.apache.whirr.ClusterSpec;
-import org.apache.whirr.service.ClusterActionEvent;
-import org.apache.whirr.service.hadoop.HadoopProxy;
-import org.apache.whirr.service.zookeeper.ZooKeeperCluster;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import static org.apache.whirr.RolePredicates.role;
+import static org.apache.whirr.service.hbase.HBaseConfigurationBuilder.buildHBaseEnv;
+import static org.apache.whirr.service.hbase.HBaseConfigurationBuilder.buildHBaseSite;
+import static org.jclouds.scriptbuilder.domain.Statements.call;
 
 public class HBaseMasterClusterActionHandler extends HBaseClusterActionHandler {
 
@@ -62,8 +63,7 @@ public class HBaseMasterClusterActionHandler extends HBaseClusterActionHandler {
   protected void beforeBootstrap(ClusterActionEvent event) throws IOException {
     ClusterSpec clusterSpec = event.getClusterSpec();    
 
-    addStatement(event, call("configure_hostnames",
-      HBaseConstants.PARAM_PROVIDER, clusterSpec.getProvider()));
+    addStatement(event, call("configure_hostnames"));
 
     addStatement(event, call("install_java"));
     addStatement(event, call("install_tarball"));
@@ -73,7 +73,6 @@ public class HBaseMasterClusterActionHandler extends HBaseClusterActionHandler {
 
     addStatement(event, call(
       getInstallFunction(getConfiguration(clusterSpec)),
-      HBaseConstants.PARAM_PROVIDER, clusterSpec.getProvider(),
       HBaseConstants.PARAM_TARBALL_URL, tarurl)
     );
   }
@@ -82,6 +81,7 @@ public class HBaseMasterClusterActionHandler extends HBaseClusterActionHandler {
   protected void beforeConfigure(ClusterActionEvent event) throws IOException, InterruptedException {
     ClusterSpec clusterSpec = event.getClusterSpec();
     Cluster cluster = event.getCluster();
+    Configuration conf = getConfiguration(clusterSpec);
 
     LOG.info("Authorizing firewall");
     Instance instance = cluster.getInstanceMatching(role(ROLE));
@@ -94,8 +94,9 @@ public class HBaseMasterClusterActionHandler extends HBaseClusterActionHandler {
     );
 
     try {
-      event.getStatementBuilder().addStatement(
-        buildHBaseSite("/tmp/hbase-site.xml", clusterSpec, cluster)
+      event.getStatementBuilder().addStatements(
+          buildHBaseSite("/tmp/hbase-site.xml", clusterSpec, cluster),
+          buildHBaseEnv("/tmp/hbase-env.sh", clusterSpec, cluster)
       );
     } catch (ConfigurationException e) {
       throw new IOException(e);
@@ -105,16 +106,15 @@ public class HBaseMasterClusterActionHandler extends HBaseClusterActionHandler {
     String quorum = ZooKeeperCluster.getHosts(cluster);
 
     String tarurl = prepareRemoteFileUrl(event,
-      getConfiguration(clusterSpec).getString(HBaseConstants.KEY_TARBALL_URL));
+      conf.getString(HBaseConstants.KEY_TARBALL_URL));
 
     addStatement(event, call(
-      getConfigureFunction(getConfiguration(clusterSpec)),
+      getConfigureFunction(conf),
       ROLE,
       HBaseConstants.PARAM_MASTER, master,
       HBaseConstants.PARAM_QUORUM, quorum,
-      HBaseConstants.PARAM_PROVIDER, clusterSpec.getProvider(),
-      HBaseConstants.PARAM_TARBALL_URL, tarurl)
-    );
+      HBaseConstants.PARAM_TARBALL_URL, tarurl
+    ));
   }
 
   @Override
