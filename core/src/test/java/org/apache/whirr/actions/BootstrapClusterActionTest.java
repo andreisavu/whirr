@@ -315,7 +315,7 @@ public class BootstrapClusterActionTest {
             "description", null, null, loginCredentials);
         Hardware hardware = new HardwareImpl("ec2", "test", "testId", location, new URI("http://node"),
                 userMetadata, ImmutableSet.<String>of(), new ArrayList<Processor>(), 1,
-                new ArrayList<Volume>(), null);
+                new ArrayList<Volume>(), null, "xen");
         Template template = new TemplateImpl(image, hardware, location, TemplateOptions.NONE);
         throw new RunNodesException("tag" + id, num, template, nodes, executionExceptions, failedNodes);
       }
