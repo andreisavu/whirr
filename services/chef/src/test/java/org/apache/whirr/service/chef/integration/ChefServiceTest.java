@@ -18,20 +18,15 @@
 
 package org.apache.whirr.service.chef.integration;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.failNotEquals;
-
-import java.io.IOException;
-import java.util.Map;
-import java.util.concurrent.TimeUnit;
-
+import com.google.common.base.Predicate;
+import com.google.common.base.Predicates;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpStatus;
 import org.apache.commons.httpclient.methods.GetMethod;
 import org.apache.whirr.ClusterController;
+import org.apache.whirr.ClusterControllerFactory;
 import org.apache.whirr.ClusterSpec;
 import org.apache.whirr.service.chef.Recipe;
 import org.jclouds.compute.RunScriptOnNodesException;
@@ -46,8 +41,13 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
+import java.io.IOException;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
+
+import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.failNotEquals;
 
 /**
  * Integration test for chef.
@@ -74,7 +74,7 @@ public class ChefServiceTest {
     config.addConfiguration(new PropertiesConfiguration(
         "whirr-chef-test.properties"));
     clusterSpec = ClusterSpec.withTemporaryKeys(config);
-    controller = new ClusterController();
+    controller = new ClusterControllerFactory().create(clusterSpec.getServiceName());
     controller.launchCluster(clusterSpec);
   }
 

@@ -18,22 +18,11 @@
 
 package org.apache.whirr.command;
 
-import static org.apache.whirr.ClusterSpec.Property.CLUSTER_NAME;
-import static org.apache.whirr.ClusterSpec.Property.IDENTITY;
-import static org.apache.whirr.ClusterSpec.Property.INSTANCE_TEMPLATES;
-
 import com.google.common.collect.Maps;
-
-import java.io.IOException;
-import java.io.PrintStream;
-import java.util.EnumSet;
-import java.util.Map;
-
 import joptsimple.ArgumentAcceptingOptionSpec;
 import joptsimple.OptionParser;
 import joptsimple.OptionSet;
 import joptsimple.OptionSpec;
-
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
@@ -47,6 +36,15 @@ import org.apache.whirr.state.ClusterStateStore;
 import org.apache.whirr.state.ClusterStateStoreFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.io.PrintStream;
+import java.util.EnumSet;
+import java.util.Map;
+
+import static org.apache.whirr.ClusterSpec.Property.CLUSTER_NAME;
+import static org.apache.whirr.ClusterSpec.Property.IDENTITY;
+import static org.apache.whirr.ClusterSpec.Property.INSTANCE_TEMPLATES;
 
 /**
  * An abstract command for interacting with clusters.

@@ -30,7 +30,6 @@ import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.whirr.Cluster;
 import org.apache.whirr.Cluster.Instance;
-import org.apache.whirr.ClusterController;
 import org.apache.whirr.ClusterSpec;
 import org.junit.After;
 import org.junit.Assert;

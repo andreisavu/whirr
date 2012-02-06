@@ -42,7 +42,7 @@ public class ClusterControllerFactory {
    */
   public ClusterController create(String serviceName) {
     if (serviceName == null) {
-      return new ClusterController();
+      return new CloudClusterController();
     }
     for (ClusterController controller : serviceLoader) {
       if (controller.getName().equals(serviceName)) {

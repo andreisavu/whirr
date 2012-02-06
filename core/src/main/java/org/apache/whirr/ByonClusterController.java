@@ -18,33 +18,23 @@
 
 package org.apache.whirr;
 
-import static org.apache.whirr.service.ClusterActionHandler.BOOTSTRAP_ACTION;
-import static org.apache.whirr.service.ClusterActionHandler.CONFIGURE_ACTION;
-import static org.apache.whirr.service.ClusterActionHandler.DESTROY_ACTION;
-
-import java.io.IOException;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import org.apache.whirr.Cluster.Instance;
+import com.google.common.base.Function;
 import org.apache.whirr.actions.ByonClusterAction;
-import org.apache.whirr.service.ClusterActionHandler;
-import org.jclouds.compute.ComputeService;
+import org.apache.whirr.service.ComputeCache;
+import org.apache.whirr.state.ClusterStateStore;
+import org.apache.whirr.state.ClusterStateStoreFactory;
 import org.jclouds.compute.ComputeServiceContext;
-import org.jclouds.compute.RunScriptOnNodesException;
-import org.jclouds.compute.domain.ExecResponse;
-import org.jclouds.compute.domain.NodeMetadata;
-import org.jclouds.compute.domain.NodeState;
-import org.jclouds.compute.options.RunScriptOptions;
-import org.jclouds.scriptbuilder.domain.Statement;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.google.common.base.Function;
-import com.google.common.base.Predicate;
-import com.google.common.base.Predicates;
-import com.google.common.collect.Collections2;
+import java.io.IOException;
+import java.util.Set;
+
+import static org.apache.whirr.service.ClusterActionHandler.BOOTSTRAP_ACTION;
+import static org.apache.whirr.service.ClusterActionHandler.CLEANUP_ACTION;
+import static org.apache.whirr.service.ClusterActionHandler.CONFIGURE_ACTION;
+import static org.apache.whirr.service.ClusterActionHandler.START_ACTION;
+import static org.apache.whirr.service.ClusterActionHandler.STOP_ACTION;
 
 /**
  * Equivalent of {@link ClusterController}, but for execution in BYON mode
@@ -54,74 +44,62 @@ public class ByonClusterController extends ClusterController {
 
   private static final Logger LOG = LoggerFactory.getLogger(ClusterController.class);
 
+  public ByonClusterController() {
+    super(ComputeCache.INSTANCE, new ClusterStateStoreFactory());
+  }
+
+  public ByonClusterController(Function<ClusterSpec, ComputeServiceContext> getCompute,
+      ClusterStateStoreFactory stateStoreFactory) {
+    super(getCompute, stateStoreFactory);
+  }
+
   @Override
   public String getName() {
     return "byon";
   }
 
-  public Cluster launchCluster(ClusterSpec clusterSpec) throws IOException,
-      InterruptedException {
-
-    Map<String, ClusterActionHandler> handlerMap = handlerMapFactory
-        .create();
-
-    ClusterAction bootstrapper = new ByonClusterAction(BOOTSTRAP_ACTION, getCompute(), handlerMap);
-    Cluster cluster = bootstrapper.execute(clusterSpec, null);
-
-    ClusterAction configurer = new ByonClusterAction(CONFIGURE_ACTION, getCompute(), handlerMap);
-    cluster = configurer.execute(clusterSpec, cluster);
-
-    getClusterStateStore(clusterSpec).save(cluster);
-    
-    return cluster;
+  @Override
+  public Cluster bootstrapCluster(ClusterSpec clusterSpec) throws IOException, InterruptedException {
+    ClusterAction bootstrapper = new ByonClusterAction(BOOTSTRAP_ACTION, getCompute(), createHandlerMap());
+    return bootstrapper.execute(clusterSpec, null);
   }
 
-  public void destroyCluster(ClusterSpec clusterSpec) throws IOException,
-      InterruptedException {
-    Map<String, ClusterActionHandler> handlerMap = handlerMapFactory
-        .create();
-
-    ClusterAction destroyer = new ByonClusterAction(DESTROY_ACTION, getCompute(), handlerMap);
-    destroyer.execute(clusterSpec, null);
-  }
-  
-  public Map<? extends NodeMetadata, ExecResponse> runScriptOnNodesMatching(final ClusterSpec spec,
-      Predicate<NodeMetadata> condition, final Statement statement) throws IOException, RunScriptOnNodesException {
-    
-    ComputeServiceContext computeServiceContext = getCompute().apply(spec);
-    ComputeService computeService = computeServiceContext.getComputeService();
-    Cluster cluster = getClusterStateStore(spec).load();
-
-    RunScriptOptions options = RunScriptOptions.Builder.runAsRoot(false).wrapInInitScript(false);
-    return computeService.runScriptOnNodesMatching(Predicates.<NodeMetadata>and(condition, runningIn(cluster)), statement, options);
+  @Override
+  public Cluster configureServices(ClusterSpec clusterSpec, Cluster cluster,
+      Set<String> targetRoles, Set<String> targetInstanceIds) throws IOException, InterruptedException {
+    ClusterAction configurer = new ByonClusterAction(CONFIGURE_ACTION, getCompute(), createHandlerMap());
+    return configurer.execute(clusterSpec, cluster);
   }
 
-  private Predicate<NodeMetadata> runningIn(Cluster cluster) {
-    final Set<String> instanceIds = new HashSet<String>(Collections2.transform(cluster.getInstances(), new Function<Instance, String>() {
-      @Override
-      public String apply(Instance instance) {
-        return instance.getId();
-      }
-    }));
-    return new Predicate<NodeMetadata>() {
-      @Override
-      public boolean apply(final NodeMetadata nodeMetadata) {
-        return instanceIds.contains(nodeMetadata.getId()) && nodeMetadata.getState().equals(NodeState.RUNNING);
-      }
-    };
+  @Override
+  public Cluster startServices(ClusterSpec clusterSpec, Cluster cluster,
+      Set<String> targetRoles, Set<String> targetInstanceIds) throws IOException, InterruptedException {
+    ClusterAction configurer = new ByonClusterAction(START_ACTION, getCompute(), createHandlerMap());
+    return configurer.execute(clusterSpec, cluster);
+  }
+
+  @Override
+  public Cluster stopServices(ClusterSpec clusterSpec, Cluster cluster,
+      Set<String> targetRoles, Set<String> targetInstanceIds) throws IOException, InterruptedException {
+    ClusterAction configurer = new ByonClusterAction(STOP_ACTION, getCompute(), createHandlerMap());
+    return configurer.execute(clusterSpec, cluster);
+  }
+
+  @Override
+  public Cluster cleanupCluster(ClusterSpec clusterSpec, Cluster cluster) throws IOException, InterruptedException {
+    ClusterAction configurer = new ByonClusterAction(CLEANUP_ACTION, getCompute(), createHandlerMap());
+    return configurer.execute(clusterSpec, cluster);
+  }
+
+  @Override
+  public void destroyCluster(ClusterSpec clusterSpec, Cluster cluster, ClusterStateStore stateStore)
+      throws IOException, InterruptedException {
+    // TODO: what does it mean destroy for byon?
   }
 
   @Override
   public void destroyInstance(ClusterSpec clusterSpec, String instanceId)
       throws IOException {
     // TODO
-  }
-  
-  @Override
-  public Set<? extends NodeMetadata> getNodes(ClusterSpec clusterSpec)
-      throws IOException, InterruptedException {
-    ComputeServiceContext computeServiceContext = getCompute().apply(clusterSpec);
-    ComputeService computeService = computeServiceContext.getComputeService();
-    return computeService.listNodesDetailsMatching(Predicates.in(computeService.listNodes()));
   }
 }

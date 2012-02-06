@@ -19,6 +19,7 @@
 package org.apache.whirr.karaf.itest;
 
 
+import org.apache.whirr.CloudClusterController;
 import org.apache.whirr.ClusterController;
 import org.apache.whirr.service.ClusterActionHandler;
 import org.junit.Assert;
@@ -61,7 +62,7 @@ public class WhirrServicesTest extends WhirrKarafTestSupport {
     System.err.println(executeCommand("osgi:list"));
 
     //Test that services properly register to OSGi service registry.
-    ClusterController clusterController = getOsgiService(ClusterController.class, "(name=default)", SERVICE_TIMEOUT);
+    ClusterController clusterController = getOsgiService(CloudClusterController.class, "(name=default)", SERVICE_TIMEOUT);
     Map<String, ClusterActionHandler> actionHandlerMap = clusterController.getHandlerMapFactory().create();
     Assert.assertNotNull(clusterController);
 

@@ -18,15 +18,7 @@
 
 package org.apache.whirr.service.cassandra.integration;
 
-import static org.junit.Assert.assertTrue;
-
 import com.google.common.collect.Sets;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.cassandra.thrift.Cassandra;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -38,6 +30,7 @@ import org.apache.thrift.transport.TTransport;
 import org.apache.whirr.Cluster;
 import org.apache.whirr.Cluster.Instance;
 import org.apache.whirr.ClusterController;
+import org.apache.whirr.ClusterControllerFactory;
 import org.apache.whirr.ClusterSpec;
 import org.apache.whirr.service.cassandra.CassandraClusterActionHandler;
 import org.junit.After;
@@ -45,6 +38,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+
+import static org.junit.Assert.assertTrue;
 
 public class CassandraServiceTest {
 
@@ -63,7 +63,7 @@ public class CassandraServiceTest {
     config.addConfiguration(new PropertiesConfiguration("whirr-cassandra-test.properties"));
     clusterSpec = ClusterSpec.withTemporaryKeys(config);
     
-    controller = new ClusterController();
+    controller = new ClusterControllerFactory().create(clusterSpec.getServiceName());
     cluster = controller.launchCluster(clusterSpec);
 
     waitForCassandra();

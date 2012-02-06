@@ -18,15 +18,8 @@
 
 package org.apache.whirr.service.ganglia.integration;
 
-import static org.apache.whirr.RolePredicates.anyRoleIn;
-import static org.apache.whirr.service.ganglia.GangliaMetadClusterActionHandler.GANGLIA_METAD_ROLE;
-import static org.apache.whirr.service.ganglia.GangliaMonitorClusterActionHandler.GANGLIA_MONITOR_ROLE;
-
-import java.io.IOException;
-import java.net.Socket;
-
+import com.google.common.collect.Sets;
 import junit.framework.TestCase;
-
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.commons.httpclient.HttpClient;
@@ -45,7 +38,12 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.collect.Sets;
+import java.io.IOException;
+import java.net.Socket;
+
+import static org.apache.whirr.RolePredicates.anyRoleIn;
+import static org.apache.whirr.service.ganglia.GangliaMetadClusterActionHandler.GANGLIA_METAD_ROLE;
+import static org.apache.whirr.service.ganglia.GangliaMonitorClusterActionHandler.GANGLIA_MONITOR_ROLE;
 
 public class GangliaServiceTest extends TestCase {
   

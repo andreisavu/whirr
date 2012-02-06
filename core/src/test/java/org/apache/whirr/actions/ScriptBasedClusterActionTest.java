@@ -23,6 +23,7 @@ import com.google.common.base.Predicate;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Iterables;
+import org.apache.whirr.CloudClusterController;
 import org.apache.whirr.Cluster;
 import org.apache.whirr.ClusterController;
 import org.apache.whirr.ClusterSpec;
@@ -109,7 +110,7 @@ public abstract class ScriptBasedClusterActionTest<T extends ScriptBasedClusterA
         newInstanceTemplate("noop1", "noop3")
     ));
 
-    ClusterController controller = new ClusterController();
+    ClusterController controller = new CloudClusterController();
     cluster = controller.launchCluster(clusterSpec);
 
     DryRunModule.resetDryRun();

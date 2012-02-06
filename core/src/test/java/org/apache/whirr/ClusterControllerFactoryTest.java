@@ -18,16 +18,16 @@
 
 package org.apache.whirr;
 
-import static org.hamcrest.Matchers.instanceOf;
-import static org.junit.Assert.assertThat;
+import org.junit.Test;
 
 import java.io.IOException;
 
-import org.junit.Test;
+import static org.hamcrest.Matchers.instanceOf;
+import static org.junit.Assert.assertThat;
 
 public class ClusterControllerFactoryTest {
   
-  public static class TestClusterController extends ClusterController {
+  public static class TestCloudClusterController extends CloudClusterController {
     @Override
     public String getName() {
       return "test-service";
@@ -42,7 +42,7 @@ public class ClusterControllerFactoryTest {
   public void testServiceFactoryIsCreatedFromWhirrProperties() throws IOException {
     ClusterControllerFactory factory = new ClusterControllerFactory();
     ClusterController controller = factory.create("test-service");
-    assertThat(controller, instanceOf(TestClusterController.class));
+    assertThat(controller, instanceOf(TestCloudClusterController.class));
   }
 
   @Test

@@ -18,23 +18,8 @@
 
 package org.apache.whirr.cli.command;
 
-import static com.google.common.base.Preconditions.checkArgument;
-import static org.hamcrest.Matchers.containsString;
-import static org.hamcrest.Matchers.is;
-import static org.junit.Assert.assertThat;
-import static org.mockito.Matchers.any;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-
-import java.io.File;
-import java.util.Collections;
-import java.util.Map;
-import java.util.Set;
-
 import org.apache.whirr.Cluster;
 import org.apache.whirr.ClusterController;
 import org.apache.whirr.ClusterControllerFactory;
@@ -50,6 +35,20 @@ import org.jclouds.domain.Credentials;
 import org.jclouds.domain.LocationBuilder;
 import org.jclouds.domain.LocationScope;
 import org.junit.Test;
+
+import java.io.File;
+import java.util.Collections;
+import java.util.Map;
+import java.util.Set;
+
+import static com.google.common.base.Preconditions.checkArgument;
+import static org.hamcrest.Matchers.containsString;
+import static org.hamcrest.Matchers.is;
+import static org.junit.Assert.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class ListClusterCommandTest extends BaseCommandTest {
 

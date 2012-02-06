@@ -18,16 +18,13 @@
 
 package org.apache.whirr.service.chef;
 
-import static junit.framework.Assert.assertTrue;
-import static junit.framework.Assert.fail;
-
-import java.io.IOException;
-import java.lang.reflect.Field;
-import java.util.Map.Entry;
-
+import com.google.common.base.Predicate;
+import com.google.common.collect.ListMultimap;
+import com.jcraft.jsch.JSchException;
 import org.apache.commons.configuration.Configuration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
+import org.apache.whirr.CloudClusterController;
 import org.apache.whirr.ClusterController;
 import org.apache.whirr.ClusterSpec;
 import org.apache.whirr.service.DryRunModule;
@@ -42,9 +39,12 @@ import org.jclouds.scriptbuilder.domain.OsFamily;
 import org.junit.Before;
 import org.junit.Test;
 
-import com.google.common.base.Predicate;
-import com.google.common.collect.ListMultimap;
-import com.jcraft.jsch.JSchException;
+import java.io.IOException;
+import java.lang.reflect.Field;
+import java.util.Map.Entry;
+
+import static junit.framework.Assert.assertTrue;
+import static junit.framework.Assert.fail;
 
 public class ChefServiceDryRunTest {
 
@@ -89,7 +89,7 @@ public class ChefServiceDryRunTest {
       throws IOException, InterruptedException, ConfigurationException,
       JSchException {
     ClusterSpec clusterSpec = ClusterSpec.withTemporaryKeys(config);
-    ClusterController controller = new ClusterController();
+    ClusterController controller = new CloudClusterController();
     controller.launchCluster(clusterSpec);
     return controller;
   }

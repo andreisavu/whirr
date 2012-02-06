@@ -24,6 +24,7 @@ import com.google.common.collect.Lists;
 import com.jcraft.jsch.JSchException;
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.ConfigurationException;
+import org.apache.whirr.CloudClusterController;
 import org.apache.whirr.ClusterController;
 import org.apache.whirr.ClusterSpec;
 import org.apache.whirr.service.DryRunModule.DryRun;
@@ -129,7 +130,7 @@ public class DryRunModuleTest {
     config.setProperty("whirr.state-store", "memory");
 
     ClusterSpec clusterSpec = ClusterSpec.withTemporaryKeys(config);
-    ClusterController controller = new ClusterController();
+    ClusterController controller = new CloudClusterController();
 
     controller.launchCluster(clusterSpec);
     controller.destroyCluster(clusterSpec);
@@ -161,7 +162,7 @@ public class DryRunModuleTest {
     config.setProperty("whirr.state-store", "memory");
 
     ClusterSpec clusterSpec = ClusterSpec.withTemporaryKeys(config);
-    ClusterController controller = new ClusterController();
+    ClusterController controller = new CloudClusterController();
 
     controller.launchCluster(clusterSpec);
     controller.destroyCluster(clusterSpec);

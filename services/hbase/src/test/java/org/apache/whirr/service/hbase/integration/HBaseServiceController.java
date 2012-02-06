@@ -18,12 +18,6 @@
 
 package org.apache.whirr.service.hbase.integration;
 
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.hadoop.conf.Configuration;
@@ -40,12 +34,19 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 import org.apache.whirr.Cluster;
 import org.apache.whirr.ClusterController;
+import org.apache.whirr.ClusterControllerFactory;
 import org.apache.whirr.ClusterSpec;
 import org.apache.whirr.RolePredicates;
 import org.apache.whirr.service.hadoop.HadoopProxy;
 import org.apache.whirr.service.hbase.HBaseThriftServerClusterActionHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class HBaseServiceController {
 
@@ -94,7 +95,7 @@ public class HBaseServiceController {
     }
     config.addConfiguration(new PropertiesConfiguration(this.configResource));
     clusterSpec = ClusterSpec.withTemporaryKeys(config);
-    controller = new ClusterController();
+    controller = new ClusterControllerFactory().create(clusterSpec.getServiceName());
 
     cluster = controller.launchCluster(clusterSpec);
     proxy = new HadoopProxy(clusterSpec, cluster);

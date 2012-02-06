@@ -18,11 +18,6 @@
 
 package org.apache.whirr.service.zookeeper.integration;
 
-import static junit.framework.Assert.assertEquals;
-
-import java.io.IOException;
-import java.util.concurrent.CountDownLatch;
-
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.PropertiesConfiguration;
 import org.apache.whirr.Cluster;
@@ -39,6 +34,11 @@ import org.apache.zookeeper.ZooKeeper;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
+
+import java.io.IOException;
+import java.util.concurrent.CountDownLatch;
+
+import static junit.framework.Assert.assertEquals;
 
 public class ZooKeeperServiceTest {
   

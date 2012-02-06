@@ -18,11 +18,6 @@
 
 package org.apache.whirr.service.hadoop.integration;
 
-import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Map.Entry;
-
 import org.apache.commons.configuration.CompositeConfiguration;
 import org.apache.commons.configuration.ConfigurationException;
 import org.apache.commons.configuration.PropertiesConfiguration;
@@ -35,10 +30,16 @@ import org.apache.hadoop.mapred.JobClient;
 import org.apache.hadoop.mapred.JobConf;
 import org.apache.whirr.Cluster;
 import org.apache.whirr.ClusterController;
+import org.apache.whirr.ClusterControllerFactory;
 import org.apache.whirr.ClusterSpec;
 import org.apache.whirr.service.hadoop.HadoopProxy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Map.Entry;
 
 public class HadoopServiceController {
   
@@ -86,7 +87,7 @@ public class HadoopServiceController {
     }
     config.addConfiguration(configuration);
     clusterSpec = ClusterSpec.withTemporaryKeys(config);
-    controller = new ClusterController();
+    controller = new ClusterControllerFactory().create(clusterSpec.getServiceName());
     
     cluster = controller.launchCluster(clusterSpec);
     proxy = new HadoopProxy(clusterSpec, cluster);
