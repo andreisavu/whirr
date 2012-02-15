@@ -15,24 +15,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-package org.apache.whirr.service.zookeeper;
-
-import com.google.common.base.Joiner;
-
-import org.apache.whirr.Cluster;
-import org.apache.whirr.RolePredicates;
-
-public class ZooKeeperCluster {
-  public static String getHosts(Cluster cluster, boolean internalHosts) {
-    return Joiner.on(',').join(
-      ZooKeeperClusterActionHandler.getHosts(cluster.getInstancesMatching(
-        RolePredicates.role(ZooKeeperClusterActionHandler.ZOOKEEPER_ROLE)
-      ), internalHosts)
-    );
+function FindProxyForURL(url, host) {
+  if ((shExpMatch(host, "*ec2*.amazonaws.com*")) ||
+      (shExpMatch(host, "*ec2.internal*")) ||
+      (shExpMatch(host, "*domu*.internal*"))) {
+    return "SOCKS localhost:6666";
   }
-
-  public static String getHosts(Cluster cluster) {
-    return getHosts(cluster, false);
-  }
+  return "DIRECT";
 }

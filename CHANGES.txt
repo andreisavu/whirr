@@ -53,6 +53,14 @@ Trunk (unreleased changes)
     WHIRR-422. Integration tests should fail or succeed in a limited 
     amount of time (asavu)
 
+    WHIRR-347. Support provider-independent environment variables for 
+    cloud credentials (asavu)
+
+    WHIRR-463. Fail fast when running as root (asavu)
+
+    WHIRR-35. Include .pac file for browsing to Hadoop clusters 
+    started on EC2 (asavu)
+
   BUG FIXES
 
     WHIRR-367. Wrong groupId for zookeeper (Joe Crobak via asavu)
@@ -73,6 +81,9 @@ Trunk (unreleased changes)
 
     WHIRR-502. configure_cdh_hadoop.sh: syntax error trying to modify 
     permissions on $HADOOP_LOG_DIR (asavu)
+
+    WHIRR-510. Get ZooKeeper ensemble with internal addresses 
+    (David Arthur via asavu)
 
 Release 0.7.0 - 2011-12-11
 
