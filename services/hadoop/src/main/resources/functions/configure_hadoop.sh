@@ -18,7 +18,7 @@ function configure_hadoop() {
   local OPTIND
   local OPTARG
 
-  if [ "$CONFIGURE_HADOOP_DONE" == "1" ]; then
+  if [ -d /data/hadoop ]; then
     echo "Hadoop is already configured."
     return;
   fi
@@ -68,64 +68,6 @@ function configure_hadoop() {
   mkdir -p $(dirname $HADOOP_LOG_DIR)
   ln -s /data/hadoop/logs $HADOOP_LOG_DIR
   chown -R hadoop:hadoop $HADOOP_LOG_DIR
-
-  for role in $(echo "$ROLES" | tr "," "\n"); do
-    case $role in
-    hadoop-namenode)
-      start_namenode
-      ;;
-    hadoop-secondarynamenode)
-      start_hadoop_daemon secondarynamenode
-      ;;
-    hadoop-jobtracker)
-      start_hadoop_daemon jobtracker
-      ;;
-    hadoop-datanode)
-      start_hadoop_daemon datanode
-      ;;
-    hadoop-tasktracker)
-      start_hadoop_daemon tasktracker
-      ;;
-    esac
-  done
-
-  CONFIGURE_HADOOP_DONE=1
-
 }
 
-function start_namenode() {
-  if which dpkg &> /dev/null; then
-    AS_HADOOP="su -s /bin/bash - hadoop -c"
-  elif which rpm &> /dev/null; then
-    AS_HADOOP="/sbin/runuser -s /bin/bash - hadoop -c"
-  fi
-
-  # Format HDFS
-  [ ! -e /data/hadoop/hdfs ] && $AS_HADOOP "$HADOOP_HOME/bin/hadoop namenode -format"
-
-  $AS_HADOOP "$HADOOP_HOME/bin/hadoop-daemon.sh start namenode"
-
-  $AS_HADOOP "$HADOOP_HOME/bin/hadoop dfsadmin -safemode wait"
-  $AS_HADOOP "$HADOOP_HOME/bin/hadoop fs -mkdir /user"
-  # The following is questionable, as it allows a user to delete another user
-  # It's needed to allow users to create their own user directories
-  $AS_HADOOP "$HADOOP_HOME/bin/hadoop fs -chmod +w /user"
-  
-  # Create temporary directory for Pig and Hive in HDFS
-  $AS_HADOOP "$HADOOP_HOME/bin/hadoop fs -mkdir /tmp"
-  $AS_HADOOP "$HADOOP_HOME/bin/hadoop fs -chmod +w /tmp"
-  $AS_HADOOP "$HADOOP_HOME/bin/hadoop fs -mkdir /user/hive/warehouse"
-  $AS_HADOOP "$HADOOP_HOME/bin/hadoop fs -chmod +w /user/hive/warehouse"
-
-}
-
-function start_hadoop_daemon() {
-  if which dpkg &> /dev/null; then
-    AS_HADOOP="su -s /bin/bash - hadoop -c"
-  elif which rpm &> /dev/null; then
-    AS_HADOOP="/sbin/runuser -s /bin/bash - hadoop -c"
-  fi
-  $AS_HADOOP "$HADOOP_HOME/bin/hadoop-daemon.sh start $1"
-  
-}
 

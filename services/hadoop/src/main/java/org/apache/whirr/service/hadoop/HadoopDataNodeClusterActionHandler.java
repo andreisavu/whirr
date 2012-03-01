@@ -18,13 +18,13 @@
 
 package org.apache.whirr.service.hadoop;
 
-import java.io.IOException;
-
-import org.apache.whirr.Cluster;
 import org.apache.whirr.ClusterSpec;
 import org.apache.whirr.service.ClusterActionEvent;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import java.io.IOException;
+
+import static org.jclouds.scriptbuilder.domain.Statements.call;
 
 public class HadoopDataNodeClusterActionHandler extends HadoopClusterActionHandler {
 
@@ -32,7 +32,7 @@ public class HadoopDataNodeClusterActionHandler extends HadoopClusterActionHandl
       LoggerFactory.getLogger(HadoopDataNodeClusterActionHandler.class);
 
   public static final String ROLE = "hadoop-datanode";
-  
+
   @Override
   public String getRole() {
     return ROLE;
@@ -42,14 +42,16 @@ public class HadoopDataNodeClusterActionHandler extends HadoopClusterActionHandl
   protected void afterConfigure(ClusterActionEvent event) throws IOException,
       InterruptedException {
     ClusterSpec clusterSpec = event.getClusterSpec();
-    Cluster cluster = event.getCluster();
-    
-    // TODO: wait for TTs to come up (done in test for the moment)
-    
     LOG.info("Completed configuration of {} role {}", clusterSpec.getClusterName(), getRole());
-
-    // TODO: List data nodes + url to their WEB UI?
   }
-  
-  
+
+  @Override
+  protected void beforeStart(ClusterActionEvent event) throws IOException {
+    addStatement(event, call("start_hadoop_daemon", "datanode"));
+  }
+
+  @Override
+  protected void beforeStop(ClusterActionEvent event) throws IOException {
+    addStatement(event, call("stop_hadoop_daemon", "datanode"));
+  }
 }

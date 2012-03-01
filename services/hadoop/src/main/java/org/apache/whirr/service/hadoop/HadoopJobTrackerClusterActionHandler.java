@@ -18,16 +18,16 @@
 
 package org.apache.whirr.service.hadoop;
 
-import static org.apache.whirr.RolePredicates.role;
 
 import java.io.IOException;
 import java.net.InetAddress;
-
 import org.apache.whirr.Cluster;
 import org.apache.whirr.Cluster.Instance;
 import org.apache.whirr.ClusterSpec;
+import static org.apache.whirr.RolePredicates.role;
 import org.apache.whirr.service.ClusterActionEvent;
 import org.apache.whirr.service.FirewallManager.Rule;
+import static org.jclouds.scriptbuilder.domain.Statements.call;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -35,18 +35,18 @@ public class HadoopJobTrackerClusterActionHandler extends HadoopNameNodeClusterA
 
   private static final Logger LOG =
       LoggerFactory.getLogger(HadoopJobTrackerClusterActionHandler.class);
-    
+
   public static final String ROLE = "hadoop-jobtracker";
-  
+
   @Override
   public String getRole() {
     return ROLE;
   }
-  
+
   @Override
   protected void doBeforeConfigure(ClusterActionEvent event) throws IOException {
     Cluster cluster = event.getCluster();
-    
+
     Instance jobtracker = cluster.getInstanceMatching(role(ROLE));
     event.getFirewallManager().addRules(
         Rule.create()
@@ -57,14 +57,14 @@ public class HadoopJobTrackerClusterActionHandler extends HadoopNameNodeClusterA
           .destination(jobtracker)
           .ports(HadoopCluster.JOBTRACKER_PORT)
     );
-    
+
   }
-  
+
   @Override
   protected void afterConfigure(ClusterActionEvent event) throws IOException {
     ClusterSpec clusterSpec = event.getClusterSpec();
     Cluster cluster = event.getCluster();
-    
+
     LOG.info("Completed configuration of {} role {}", clusterSpec.getClusterName(), getRole());
 
     InetAddress jobtrackerPublicAddress = HadoopCluster.getJobTrackerPublicAddress(cluster);
@@ -73,5 +73,14 @@ public class HadoopJobTrackerClusterActionHandler extends HadoopNameNodeClusterA
       jobtrackerPublicAddress.getHostName(), HadoopCluster.JOBTRACKER_WEB_UI_PORT);
 
   }
-  
+
+  @Override
+  protected void beforeStart(ClusterActionEvent event) throws IOException {
+    addStatement(event, call("start_hadoop_daemon", "jobtracker"));
+  }
+
+  @Override
+  protected void beforeStop(ClusterActionEvent event) throws IOException {
+    addStatement(event, call("stop_hadoop_daemon", "jobtracker"));
+  }
 }

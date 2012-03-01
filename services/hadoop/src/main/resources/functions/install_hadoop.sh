@@ -26,7 +26,7 @@ function install_hadoop() {
   local OPTIND
   local OPTARG
 
-  if [ "$INSTALL_HADOOP_DONE" == "1" ]; then
+  if [ -d /usr/local/hadoop ]; then
     echo "Hadoop is already installed."
     return;
   fi
@@ -56,7 +56,5 @@ function install_hadoop() {
 
   echo "export HADOOP_HOME=$HADOOP_HOME" >> /etc/profile
   echo 'export PATH=$JAVA_HOME/bin:$HADOOP_HOME/bin:$PATH' >> /etc/profile
-
-  INSTALL_HADOOP_DONE=1
 }
 

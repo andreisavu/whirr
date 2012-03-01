@@ -18,18 +18,9 @@
 
 package org.apache.whirr.service.hadoop;
 
-import static org.apache.whirr.RolePredicates.role;
-
 import com.google.common.base.Charsets;
 import com.google.common.base.Joiner;
 import com.google.common.io.Files;
-
-import java.io.File;
-import java.io.IOException;
-import java.net.InetAddress;
-import java.util.Map.Entry;
-import java.util.Properties;
-
 import org.apache.whirr.Cluster;
 import org.apache.whirr.Cluster.Instance;
 import org.apache.whirr.ClusterSpec;
@@ -37,6 +28,15 @@ import org.apache.whirr.service.ClusterActionEvent;
 import org.apache.whirr.service.FirewallManager.Rule;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.net.InetAddress;
+import java.util.Map.Entry;
+import java.util.Properties;
+
+import static org.apache.whirr.RolePredicates.role;
+import static org.jclouds.scriptbuilder.domain.Statements.call;
 
 public class HadoopNameNodeClusterActionHandler extends HadoopClusterActionHandler {
 
@@ -64,15 +64,12 @@ public class HadoopNameNodeClusterActionHandler extends HadoopClusterActionHandl
           .destination(namenode)
           .ports(HadoopCluster.NAMENODE_PORT, HadoopCluster.JOBTRACKER_PORT)
     );
-    
   }
   
   @Override
   protected void afterConfigure(ClusterActionEvent event) throws IOException {
     ClusterSpec clusterSpec = event.getClusterSpec();
     Cluster cluster = event.getCluster();
-    
-    // TODO: wait for TTs to come up (done in test for the moment)
     
     LOG.info("Completed configuration of {} role {}", clusterSpec.getClusterName(), getRole());
     InetAddress namenodePublicAddress = HadoopCluster.getNamenodePublicAddress(cluster);
@@ -85,6 +82,16 @@ public class HadoopNameNodeClusterActionHandler extends HadoopClusterActionHandl
     createClientSideHadoopSiteFile(clusterSpec, config);
     createProxyScript(clusterSpec, cluster);
     event.setCluster(new Cluster(cluster.getInstances(), config));
+  }
+
+  @Override
+  protected void beforeStart(ClusterActionEvent event) throws IOException {
+    addStatement(event, call("start_hadoop_namenode"));
+  }
+
+  @Override
+  protected void beforeStop(ClusterActionEvent event) throws IOException {
+    addStatement(event, call("stop_hadoop_daemon", "namenode"));
   }
 
   private Properties createClientSideProperties(ClusterSpec clusterSpec,
