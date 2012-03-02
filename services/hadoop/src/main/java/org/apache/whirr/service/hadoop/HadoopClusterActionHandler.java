@@ -70,11 +70,9 @@ public abstract class HadoopClusterActionHandler extends ClusterActionHandlerSup
     addStatement(event, call(getInstallFunction(conf, "java", "install_openjdk")));
     addStatement(event, call("install_tarball"));
 
-    String tarball = prepareRemoteFileUrl(event,
-        conf.getString("whirr.hadoop.tarball.url"));
+    String tarball = prepareRemoteFileUrl(event, conf.getString("whirr.hadoop.tarball.url"));
 
-    addStatement(event, call(getInstallFunction(conf),
-        "-u", tarball));
+    addStatement(event, call(getInstallFunction(conf), "-u", tarball));
   }
   
   @Override

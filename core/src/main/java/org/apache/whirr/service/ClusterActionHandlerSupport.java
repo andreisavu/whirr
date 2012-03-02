@@ -221,23 +221,23 @@ public abstract class ClusterActionHandlerSupport implements ClusterActionHandle
   }
 
   /**
-   * Get service configure function name from the configuration
+   * Get role configure function name from the configuration
    */
-  public String getConfigureFunction(Configuration config, String service, String defaultFunction) {
-    return getFunctionName(config, service, "configure", defaultFunction);
+  public String getConfigureFunction(Configuration config, String defaultFunction) {
+    return getFunctionName(config, getRole(), "configure", defaultFunction);
   }
 
   /**
-   * Get service cleanup function name from the configuration
+   * Get role cleanup function name from the configuration
    */
-  public String getCleanupFunction(Configuration config, String service, String defaultFunction) {
-    return getFunctionName(config, service, "cleanup", defaultFunction);
+  public String getCleanupFunction(Configuration config, String defaultFunction) {
+    return getFunctionName(config, getRole(), "cleanup", defaultFunction);
   }
 
-  public String getFunctionName(Configuration config, String service, String functionName, String defaultFunction) {
+  public String getFunctionName(Configuration config, String role, String functionName, String defaultFunction) {
 
-    String deprecatedKey = String.format("whirr.%s-%s-function", service, functionName);
-    String key = String.format("whirr.%s.%s-function", service, functionName);
+    String deprecatedKey = String.format("whirr.%s-%s-function", role, functionName);
+    String key = String.format("whirr.%s.%s-function", role, functionName);
 
     if (config.containsKey(deprecatedKey)) {
       LOG.warn("'{}' is deprecated. Replace with '{}'", deprecatedKey, key);
