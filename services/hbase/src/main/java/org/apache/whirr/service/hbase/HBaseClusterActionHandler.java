@@ -41,12 +41,14 @@ public abstract class HBaseClusterActionHandler
       HBaseConstants.FILE_HBASE_DEFAULT_PROPERTIES);
   }
 
-  protected String getInstallFunction(Configuration config) {
-    return getInstallFunction(config, "hbase", HBaseConstants.FUNCTION_INSTALL);
+  @Override
+  public String getInstallFunction(Configuration config) {
+    return getInstallFunction(config, HBaseConstants.FUNCTION_INSTALL);
   }
 
+  @Override
   protected String getConfigureFunction(Configuration config) {
-    return getConfigureFunction(config, "hbase", HBaseConstants.FUNCTION_CONFIGURE);
+    return getConfigureFunction(config, HBaseConstants.FUNCTION_CONFIGURE);
   }
 
 }

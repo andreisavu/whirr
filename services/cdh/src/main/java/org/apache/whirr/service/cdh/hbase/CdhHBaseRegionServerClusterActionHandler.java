@@ -16,15 +16,14 @@
  * limitations under the License.
  */
 
-package org.apache.whirr.service.cdh.hadoop;
+package org.apache.whirr.service.cdh.hbase;
 
 import org.apache.whirr.service.ClusterActionHandlerSupport;
 
-public class CdhNameNodeClusterActionHandler extends ClusterActionHandlerSupport {
+public class CdhHBaseRegionServerClusterActionHandler extends ClusterActionHandlerSupport {
 
   @Override
   public String getRole() {
-    return "cdh-namenode";
+    return "cdh-hbase-regionserver";
   }
-
 }

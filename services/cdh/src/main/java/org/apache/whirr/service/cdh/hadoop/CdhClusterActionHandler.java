@@ -28,15 +28,17 @@ import static org.jclouds.scriptbuilder.domain.Statements.call;
 public abstract class CdhClusterActionHandler extends ClusterActionHandlerSupport {
 
   protected Configuration getConfiguration(ClusterSpec clusterSpec) throws IOException {
-    return getConfiguration(clusterSpec, "whirr-cdh-default.properties");
+    return getConfiguration(clusterSpec, "whirr-cdh-hadoop-default.properties");
   }
 
-  protected String getInstallFunction(Configuration config) {
-    return getInstallFunction(config, "hadoop", "install_cdh_hadoop");
+  @Override
+  public String getInstallFunction(Configuration config) {
+    return getInstallFunction(config, "install_cdh_hadoop");
   }
 
+  @Override
   protected String getConfigureFunction(Configuration config) {
-    return getConfigureFunction(config, "hadoop", "configure_cdh_hadoop");
+    return getConfigureFunction(config, "configure_cdh_hadoop");
   }
 
   @Override
@@ -45,13 +47,9 @@ public abstract class CdhClusterActionHandler extends ClusterActionHandlerSuppor
     Configuration conf = getConfiguration(clusterSpec);
 
     addStatement(event, call("configure_hostnames"));
+    installJDK(event);
 
-    addStatement(event, call(getInstallFunction(conf, "java", "install_openjdk")));
-    addStatement(event, call("install_tarball"));
-
-    String tarball = prepareRemoteFileUrl(event, conf.getString("whirr.hadoop.tarball.url"));
-
-    addStatement(event, call(getInstallFunction(conf), "-u", tarball));
+    addStatement(event, call(getInstallFunction(conf)));
   }
 
 }

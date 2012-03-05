@@ -18,13 +18,56 @@
 
 package org.apache.whirr.service.cdh.zookeeper;
 
-import org.apache.whirr.service.zookeeper.ZooKeeperClusterActionHandler;
+import com.google.common.base.Joiner;
+import java.io.IOException;
+import java.util.Set;
+import org.apache.commons.configuration.Configuration;
+import org.apache.whirr.Cluster;
+import org.apache.whirr.ClusterSpec;
+import static org.apache.whirr.RolePredicates.role;
+import org.apache.whirr.service.ClusterActionEvent;
+import org.apache.whirr.service.ClusterActionHandlerSupport;
+import org.apache.whirr.service.FirewallManager;
+import org.apache.whirr.service.zookeeper.ZooKeeperCluster;
+import static org.jclouds.scriptbuilder.domain.Statements.call;
 
-public class CdhZooKeeperClusterActionHandler extends ZooKeeperClusterActionHandler {
+public class CdhZooKeeperClusterActionHandler extends ClusterActionHandlerSupport {
+
+  public static final String ROLE = "cdh-zookeeper";
+  public static final int CLIENT_PORT = 2181;
 
   @Override
   public String getRole() {
-    return "cdh-zookeeper";
+    return ROLE;
   }
 
+  protected Configuration getConfiguration(ClusterSpec spec) throws IOException {
+    return getConfiguration(spec, "whirr-cdh-zookeeper-default.properties");
+  }
+
+  @Override
+  protected void beforeBootstrap(ClusterActionEvent event) throws IOException {
+    installJDK(event);
+    addStatement(event, call(getInstallFunction(getConfiguration(event.getClusterSpec()),
+        "install_cdh_zookeeper")));
+  }
+
+  @Override
+  protected void beforeConfigure(ClusterActionEvent event) throws IOException {
+    ClusterSpec clusterSpec = event.getClusterSpec();
+    Cluster cluster = event.getCluster();
+
+    event.getFirewallManager().addRule(
+        FirewallManager.Rule.create().destination(role(ROLE)).port(CLIENT_PORT)
+    );
+
+    // Pass list of all servers in ensemble to configure script.
+    // Position is significant: i-th server has id i.
+
+    Set<Cluster.Instance> ensemble = cluster.getInstancesMatching(role(ROLE));
+    String servers = Joiner.on(' ').join(ZooKeeperCluster.getPrivateIps(ensemble));
+
+    Configuration config = getConfiguration(clusterSpec);
+    addStatement(event, call(getConfigureFunction(config, "configure_cdh_zookeeper"), servers));
+  }
 }

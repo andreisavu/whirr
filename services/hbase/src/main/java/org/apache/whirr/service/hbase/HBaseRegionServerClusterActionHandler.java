@@ -22,6 +22,9 @@ import static org.apache.whirr.RolePredicates.role;
 import static org.apache.whirr.service.FirewallManager.Rule;
 import static org.apache.whirr.service.hbase.HBaseConfigurationBuilder.buildHBaseEnv;
 import static org.apache.whirr.service.hbase.HBaseConfigurationBuilder.buildHBaseSite;
+import org.apache.whirr.service.zookeeper.ZooKeeperClusterActionHandler;
+import static org.apache.whirr.service.zookeeper.ZooKeeperClusterActionHandler.CLIENT_PORT;
+import static org.apache.whirr.service.zookeeper.ZooKeeperClusterActionHandler.ZOOKEEPER_ROLE;
 import static org.jclouds.scriptbuilder.domain.Statements.call;
 
 import java.io.IOException;
@@ -54,7 +57,7 @@ public class HBaseRegionServerClusterActionHandler extends HBaseClusterActionHan
 
     addStatement(event, call("configure_hostnames"));
 
-    addStatement(event, call(getInstallFunction(conf, "java", "install_openjdk")));
+    installJDK(event);
     addStatement(event, call("install_tarball"));
 
     String tarurl = prepareRemoteFileUrl(event,
@@ -93,7 +96,7 @@ public class HBaseRegionServerClusterActionHandler extends HBaseClusterActionHan
     }
 
     String master = masterPublicAddress.getHostName();
-    String quorum = ZooKeeperCluster.getHosts(cluster);
+    String quorum = ZooKeeperCluster.getHosts(cluster, ZOOKEEPER_ROLE, CLIENT_PORT);
 
     String tarurl = prepareRemoteFileUrl(event,
       conf.getString(HBaseConstants.KEY_TARBALL_URL));

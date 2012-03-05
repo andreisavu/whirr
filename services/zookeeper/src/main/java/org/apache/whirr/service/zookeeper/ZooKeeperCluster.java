@@ -18,21 +18,59 @@
 
 package org.apache.whirr.service.zookeeper;
 
+import com.google.common.base.Function;
 import com.google.common.base.Joiner;
 
+import com.google.common.collect.Lists;
+import java.io.IOException;
+import java.util.List;
+import java.util.Set;
 import org.apache.whirr.Cluster;
-import org.apache.whirr.RolePredicates;
+import static org.apache.whirr.RolePredicates.role;
 
 public class ZooKeeperCluster {
-  public static String getHosts(Cluster cluster, boolean internalHosts) {
+
+  public static String getHosts(Cluster cluster, String roleName, int clientPort, boolean internalHosts) {
     return Joiner.on(',').join(
-      ZooKeeperClusterActionHandler.getHosts(cluster.getInstancesMatching(
-        RolePredicates.role(ZooKeeperClusterActionHandler.ZOOKEEPER_ROLE)
-      ), internalHosts)
+        getHosts(cluster.getInstancesMatching(role(roleName)), clientPort, internalHosts)
     );
   }
 
-  public static String getHosts(Cluster cluster) {
-    return getHosts(cluster, false);
+  public static String getHosts(Cluster cluster, String roleName, int clientPort) {
+    return getHosts(cluster, roleName, clientPort, false);
+  }
+
+  public static List<String> getPrivateIps(Set<Cluster.Instance> instances) {
+    return Lists.transform(Lists.newArrayList(instances),
+        new Function<Cluster.Instance, String>() {
+          @Override
+          public String apply(Cluster.Instance instance) {
+            return instance.getPrivateIp();
+          }
+        });
+  }
+
+  public static List<String> getPublicHosts(Set<Cluster.Instance> instances, int clientPort) {
+    return getHosts(instances, clientPort, false);
+  }
+
+  public static List<String> getHosts(Set<Cluster.Instance> instances, final int clientPort, final boolean internalHost) {
+    return Lists.transform(Lists.newArrayList(instances),
+        new Function<Cluster.Instance, String>() {
+          @Override
+          public String apply(Cluster.Instance instance) {
+            try {
+              String host;
+              if (internalHost) {
+                host = instance.getPrivateHostName();
+              } else {
+                host = instance.getPublicHostName();
+              }
+              return String.format("%s:%d", host, clientPort);
+            } catch (IOException e) {
+              throw new IllegalArgumentException(e);
+            }
+          }
+        });
   }
 }

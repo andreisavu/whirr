@@ -26,6 +26,8 @@ import org.apache.whirr.ClusterControllerFactory;
 import org.apache.whirr.ClusterSpec;
 import org.apache.whirr.TestConstants;
 import org.apache.whirr.service.zookeeper.ZooKeeperCluster;
+import static org.apache.whirr.service.zookeeper.ZooKeeperClusterActionHandler.CLIENT_PORT;
+import static org.apache.whirr.service.zookeeper.ZooKeeperClusterActionHandler.ZOOKEEPER_ROLE;
 import org.apache.zookeeper.CreateMode;
 import org.apache.zookeeper.WatchedEvent;
 import org.apache.zookeeper.Watcher;
@@ -59,7 +61,7 @@ public class ZooKeeperServiceTest {
     controller = new ClusterControllerFactory().create(clusterSpec.getServiceName());
     
     cluster = controller.launchCluster(clusterSpec);
-    hosts = ZooKeeperCluster.getHosts(cluster);
+    hosts = ZooKeeperCluster.getHosts(cluster, ZOOKEEPER_ROLE, CLIENT_PORT);
   }
   
   @Test(timeout = TestConstants.ITEST_TIMEOUT)

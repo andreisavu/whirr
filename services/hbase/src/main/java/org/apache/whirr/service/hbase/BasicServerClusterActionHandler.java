@@ -20,6 +20,8 @@ package org.apache.whirr.service.hbase;
 
 import static org.apache.whirr.RolePredicates.role;
 import static org.apache.whirr.service.FirewallManager.Rule;
+import static org.apache.whirr.service.zookeeper.ZooKeeperClusterActionHandler.CLIENT_PORT;
+import static org.apache.whirr.service.zookeeper.ZooKeeperClusterActionHandler.ZOOKEEPER_ROLE;
 import static org.jclouds.scriptbuilder.domain.Statements.call;
 
 import org.apache.commons.configuration.Configuration;
@@ -58,12 +60,10 @@ public class BasicServerClusterActionHandler extends HBaseClusterActionHandler {
     Configuration conf = getConfiguration(clusterSpec);
 
     addStatement(event, call("configure_hostnames"));
-    addStatement(event, call(getInstallFunction(conf, "java", "install_openjdk")));
-    addStatement(event, call("install_tarball"));
+    installJDK(event);
 
-    String tarurl = prepareRemoteFileUrl(event,
-      conf.getString(HBaseConstants.KEY_TARBALL_URL));
 
+    String tarurl = prepareRemoteFileUrl(event, conf.getString(HBaseConstants.KEY_TARBALL_URL));
     addStatement(event, call(
       getInstallFunction(conf),
       HBaseConstants.PARAM_TARBALL_URL, tarurl)
@@ -88,7 +88,7 @@ public class BasicServerClusterActionHandler extends HBaseClusterActionHandler {
     );
 
     String master = masterPublicAddress.getHostName();
-    String quorum = ZooKeeperCluster.getHosts(cluster);
+    String quorum = ZooKeeperCluster.getHosts(cluster, ZOOKEEPER_ROLE, CLIENT_PORT);
 
     String tarurl = prepareRemoteFileUrl(event,
       getConfiguration(clusterSpec).getString(HBaseConstants.KEY_TARBALL_URL));

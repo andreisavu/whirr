@@ -32,6 +32,7 @@ import org.apache.whirr.ClusterSpec;
 import org.apache.whirr.service.jclouds.RunUrlStatement;
 import org.apache.whirr.util.BlobCache;
 import org.jclouds.scriptbuilder.domain.Statement;
+import static org.jclouds.scriptbuilder.domain.Statements.call;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -82,10 +83,10 @@ public abstract class ClusterActionHandlerSupport implements ClusterActionHandle
       afterOtherAction(event);
     }
   }
-  
+
   protected void beforeBootstrap(ClusterActionEvent event)
     throws IOException, InterruptedException { }
-  
+
   protected void beforeConfigure(ClusterActionEvent event)
     throws IOException, InterruptedException { }
 
@@ -103,10 +104,10 @@ public abstract class ClusterActionHandlerSupport implements ClusterActionHandle
 
   protected void beforeOtherAction(ClusterActionEvent event)
     throws IOException, InterruptedException { }
-  
+
   protected void afterBootstrap(ClusterActionEvent event)
     throws IOException, InterruptedException { }
-  
+
   protected void afterConfigure(ClusterActionEvent event)
     throws IOException, InterruptedException { }
 
@@ -118,13 +119,13 @@ public abstract class ClusterActionHandlerSupport implements ClusterActionHandle
 
   protected void afterCleanup(ClusterActionEvent event)
     throws IOException, InterruptedException { }
-  
+
   protected void afterDestroy(ClusterActionEvent event)
     throws IOException, InterruptedException { }
 
   protected void afterOtherAction(ClusterActionEvent event)
     throws IOException, InterruptedException { }
-  
+
   /**
    * Returns a composite configuration that is made up from the global
    * configuration coming from the Whirr core with the service default
@@ -150,7 +151,7 @@ public abstract class ClusterActionHandlerSupport implements ClusterActionHandle
       throw new IOException("Error loading " + defaultsPropertiesFile, e);
     }
  }
-  
+
   /**
    * A convenience method for adding a {@link RunUrlStatement} to a
    * {@link ClusterActionEvent}.
@@ -199,25 +200,22 @@ public abstract class ClusterActionHandlerSupport implements ClusterActionHandle
     return rawUrl;
   }
 
-  /**
-   * Get service start function name from the configuration
-   */
-  public String getStartFunction(Configuration config, String service, String defaultFunction) {
-    return getFunctionName(config, service, "start", defaultFunction);
+  public void installJDK(ClusterActionEvent event) {
+    addStatement(event, call("install_tarball"));
+    // Look for whirr.java.install-function or install openjdk
+    addStatement(event, call(getFunctionName(
+        event.getClusterSpec().getConfiguration(), "java", "install", "install_openjdk")));
   }
 
   /**
-   * Get service start function name from the configuration
+   * Get role install function name from the configuration
    */
-  public String getStopFunction(Configuration config, String service, String defaultFunction) {
-    return getFunctionName(config, service, "stop", defaultFunction);
+  public String getInstallFunction(Configuration config, String defaultFunction) {
+    return getFunctionName(config, getRole(), "install", defaultFunction);
   }
 
-  /**
-   * Get service install function name from the configuration
-   */
-  public String getInstallFunction(Configuration config, String service, String defaultFunction) {
-    return getFunctionName(config, service, "install", defaultFunction);
+  public String getInstallFunction(Configuration config) {
+    return getInstallFunction(config, "install_" + getRole());
   }
 
   /**
@@ -227,6 +225,32 @@ public abstract class ClusterActionHandlerSupport implements ClusterActionHandle
     return getFunctionName(config, getRole(), "configure", defaultFunction);
   }
 
+  protected String getConfigureFunction(Configuration config) {
+    return getConfigureFunction(config, "configure_" + getRole());
+  }
+
+  /**
+   * Get role start function name from the configuration
+   */
+  public String getStartFunction(Configuration config, String defaultFunction) {
+    return getFunctionName(config, getRole(), "start", defaultFunction);
+  }
+
+  protected String getStartFunction(Configuration config) {
+    return getStartFunction(config, "start_" + getRole());
+  }
+
+  /**
+   * Get role start function name from the configuration
+   */
+  public String getStopFunction(Configuration config, String defaultFunction) {
+    return getFunctionName(config, getRole(), "stop", defaultFunction);
+  }
+
+  protected String getStopFunction(Configuration config) {
+    return getStopFunction(config, "stop_" + getRole());
+  }
+
   /**
    * Get role cleanup function name from the configuration
    */
@@ -234,8 +258,11 @@ public abstract class ClusterActionHandlerSupport implements ClusterActionHandle
     return getFunctionName(config, getRole(), "cleanup", defaultFunction);
   }
 
-  public String getFunctionName(Configuration config, String role, String functionName, String defaultFunction) {
+  protected String getCleanupFunction(Configuration config) {
+    return getCleanupFunction(config, "cleanup_" + getRole());
+  }
 
+  public String getFunctionName(Configuration config, String role, String functionName, String defaultFunction) {
     String deprecatedKey = String.format("whirr.%s-%s-function", role, functionName);
     String key = String.format("whirr.%s.%s-function", role, functionName);
 

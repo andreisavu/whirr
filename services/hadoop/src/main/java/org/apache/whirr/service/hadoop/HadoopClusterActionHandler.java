@@ -52,26 +52,15 @@ public abstract class HadoopClusterActionHandler extends ClusterActionHandlerSup
     return getConfiguration(clusterSpec, "whirr-hadoop-default.properties");
   }
 
-  protected String getInstallFunction(Configuration config) {
-    return getInstallFunction(config, "hadoop", "install_hadoop");
-  }
-
-  protected String getConfigureFunction(Configuration config) {
-    return getConfigureFunction(config, "hadoop", "configure_hadoop");
-  }
-  
   @Override
   protected void beforeBootstrap(ClusterActionEvent event) throws IOException {
     ClusterSpec clusterSpec = event.getClusterSpec();
     Configuration conf = getConfiguration(clusterSpec);
 
     addStatement(event, call("configure_hostnames"));
-
-    addStatement(event, call(getInstallFunction(conf, "java", "install_openjdk")));
-    addStatement(event, call("install_tarball"));
+    installJDK(event);
 
     String tarball = prepareRemoteFileUrl(event, conf.getString("whirr.hadoop.tarball.url"));
-
     addStatement(event, call(getInstallFunction(conf), "-u", tarball));
   }
   

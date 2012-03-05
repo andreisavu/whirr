@@ -26,6 +26,9 @@ import org.apache.whirr.Cluster;
 import org.apache.whirr.ClusterSpec;
 import org.apache.whirr.service.hadoop.HadoopConfigurationConverter;
 import org.apache.whirr.service.zookeeper.ZooKeeperCluster;
+import org.apache.whirr.service.zookeeper.ZooKeeperClusterActionHandler;
+import static org.apache.whirr.service.zookeeper.ZooKeeperClusterActionHandler.CLIENT_PORT;
+import static org.apache.whirr.service.zookeeper.ZooKeeperClusterActionHandler.ZOOKEEPER_ROLE;
 import org.jclouds.scriptbuilder.domain.Statement;
 
 import java.io.IOException;
@@ -49,7 +52,7 @@ public class HBaseConfigurationBuilder {
     String masterHostName = master.getPublicHostName();
 
     config.setProperty("hbase.rootdir", String.format("hdfs://%s:8020/hbase", masterHostName));
-    config.setProperty("hbase.zookeeper.quorum", ZooKeeperCluster.getHosts(cluster));
+    config.setProperty("hbase.zookeeper.quorum", ZooKeeperCluster.getHosts(cluster, ZOOKEEPER_ROLE, CLIENT_PORT));
 
     return config;
   }

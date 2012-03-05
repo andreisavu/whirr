@@ -20,11 +20,11 @@ package org.apache.whirr.service.cdh.hadoop;
 
 import org.apache.whirr.service.ClusterActionHandlerSupport;
 
-public class CdhNameNodeClusterActionHandler extends ClusterActionHandlerSupport {
+public class CdhTaskTrackerClusterActionHandler extends ClusterActionHandlerSupport {
 
   @Override
   public String getRole() {
-    return "cdh-namenode";
+    return "cdh-tasktracker";
   }
 
 }

@@ -30,6 +30,9 @@ import org.apache.whirr.service.ClusterActionEvent;
 import org.apache.whirr.service.FirewallManager.Rule;
 import org.apache.whirr.service.hadoop.HadoopProxy;
 import org.apache.whirr.service.zookeeper.ZooKeeperCluster;
+import org.apache.whirr.service.zookeeper.ZooKeeperClusterActionHandler;
+import static org.apache.whirr.service.zookeeper.ZooKeeperClusterActionHandler.CLIENT_PORT;
+import static org.apache.whirr.service.zookeeper.ZooKeeperClusterActionHandler.ZOOKEEPER_ROLE;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +69,7 @@ public class HBaseMasterClusterActionHandler extends HBaseClusterActionHandler {
 
     addStatement(event, call("configure_hostnames"));
 
-    addStatement(event, call(getInstallFunction(conf, "java", "install_openjdk")));
+    installJDK(event);
     addStatement(event, call("install_tarball"));
 
     String tarurl = prepareRemoteFileUrl(event,
@@ -104,7 +107,7 @@ public class HBaseMasterClusterActionHandler extends HBaseClusterActionHandler {
     }
 
     String master = masterPublicAddress.getHostName();
-    String quorum = ZooKeeperCluster.getHosts(cluster);
+    String quorum = ZooKeeperCluster.getHosts(cluster, ZOOKEEPER_ROLE, CLIENT_PORT);
 
     String tarurl = prepareRemoteFileUrl(event,
       conf.getString(HBaseConstants.KEY_TARBALL_URL));
@@ -130,7 +133,7 @@ public class HBaseMasterClusterActionHandler extends HBaseClusterActionHandler {
     InetAddress masterPublicAddress = instance.getPublicAddress();
 
     LOG.info("Web UI available at http://{}", masterPublicAddress.getHostName());
-    String quorum = ZooKeeperCluster.getHosts(cluster);
+    String quorum = ZooKeeperCluster.getHosts(cluster, ZooKeeperClusterActionHandler.ZOOKEEPER_ROLE, CLIENT_PORT);
     Properties config = createClientSideProperties(masterPublicAddress, quorum);
     createClientSideHadoopSiteFile(clusterSpec, config);
     createProxyScript(clusterSpec, cluster);

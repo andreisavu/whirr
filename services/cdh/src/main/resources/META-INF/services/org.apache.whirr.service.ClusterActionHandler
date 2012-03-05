@@ -9,7 +9,17 @@
 #   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 #   See the License for the specific language governing permissions and
 #   limitations under the License.
-org.apache.whirr.service.cdh.CdhNameNodeClusterActionHandler
-org.apache.whirr.service.cdh.CdhDataNodeClusterActionHandler
-org.apache.whirr.service.cdh.CdhJobTrackerClusterActionHandler
-org.apache.whirr.service.cdh.CdhTaskTrackerClusterActionHandler
+
+# Hadoop
+org.apache.whirr.service.cdh.hadoop.CdhNameNodeClusterActionHandler
+org.apache.whirr.service.cdh.hadoop.CdhDataNodeClusterActionHandler
+org.apache.whirr.service.cdh.hadoop.CdhJobTrackerClusterActionHandler
+org.apache.whirr.service.cdh.hadoop.CdhTaskTrackerClusterActionHandler
+
+# HBase
+org.apache.whirr.service.cdh.hbase.CdhHBaseMasterClusterActionHandler
+org.apache.whirr.service.cdh.hbase.CdhHBaseRegionServerClusterActionHandler
+org.apache.whirr.service.cdh.hbase.CdhHBaseThriftServerClusterActionHandler
+
+# ZooKeeper
+org.apache.whirr.service.cdh.zookeeper.CdhZooKeeperClusterActionHandler
