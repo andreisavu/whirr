@@ -174,7 +174,7 @@ public abstract class ClusterActionHandlerSupport implements ClusterActionHandle
 
   public static void addClusterToEtcHostsAndFirewall(ClusterActionEvent event) throws IOException {
     if (event.getClusterSpec().isStoreClusterInEtcHosts()) {
-      addStatement(event, exec("echo -e '\\n' > /etc/hosts"));
+      addStatement(event, exec("echo -e '\\n' >> /etc/hosts"));
     
       for (Instance instance : event.getCluster().getInstances()) {
         
