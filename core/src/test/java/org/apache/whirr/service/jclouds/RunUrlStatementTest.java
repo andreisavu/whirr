@@ -60,12 +60,6 @@ public class RunUrlStatementTest {
         is("runurl http://example2.org/a/b" + NL));
   }
   
-  @Test
-  public void testCheckUrlExists() throws IOException {
-    RunUrlStatement.checkUrlExists(new URL("http://whirr.s3.amazonaws.com/"),
-        "Exists");
-  }
-
   @Test(expected = IllegalArgumentException.class)
   public void testCheckUrlDoesNotExist() throws IOException {
     RunUrlStatement.checkUrlExists(
